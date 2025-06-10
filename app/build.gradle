@@ -16,6 +16,11 @@ android {
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
+
+        // URL used to POST the generated PIN for automatic pairing
+        buildConfigField "String", "AUTO_PAIR_URL", '"https://clgaming.iw5.ir/pair"'
+        // JWT token for the pairing API. Replace with your token if needed
+        buildConfigField "String", "AUTO_PAIR_JWT_TOKEN", '""'
     }
 
     flavorDimensions.add("root")
