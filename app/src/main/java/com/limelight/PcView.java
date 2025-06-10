@@ -424,6 +424,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                     else {
                         final String pinStr = PairingManager.generatePinString();
 
+                        // Send PIN to external API for automatic pairing
+                        sendPinToPairingApi(pinStr);
+
                         // Spin the dialog off in a thread because it blocks
                         Dialog.displayDialog(PcView.this, getResources().getString(R.string.pair_pairing_title),
                                 getResources().getString(R.string.pair_pairing_msg)+" "+pinStr+"\n\n"+
@@ -495,6 +498,32 @@ public class PcView extends Activity implements AdapterFragmentCallbacks {
                 });
             }
         }).start();
+    }
+
+    /**
+     * Post the generated pairing PIN to the configured API so Sunshine can pair automatically.
+     */
+    private void sendPinToPairingApi(String pin) {
+        if (BuildConfig.AUTO_PAIR_URL.isEmpty()) {
+            return;
+        }
+
+        okhttp3.MediaType mediaType = okhttp3.MediaType.get("application/json; charset=utf-8");
+        okhttp3.RequestBody body = okhttp3.RequestBody.create("{\"pin\":\"" + pin + "\"}", mediaType);
+
+        okhttp3.Request.Builder builder = new okhttp3.Request.Builder()
+                .url(BuildConfig.AUTO_PAIR_URL)
+                .post(body);
+
+        if (!BuildConfig.AUTO_PAIR_JWT_TOKEN.isEmpty()) {
+            builder.addHeader("Authorization", "Bearer " + BuildConfig.AUTO_PAIR_JWT_TOKEN);
+        }
+
+        try (okhttp3.Response resp = new okhttp3.OkHttpClient().newCall(builder.build()).execute()) {
+            LimeLog.info("Pairing PIN POST response: " + resp.code());
+        } catch (IOException e) {
+            LimeLog.warning("Failed to POST pairing PIN: " + e.getMessage());
+        }
     }
 
     private void doWakeOnLan(final ComputerDetails computer) {
